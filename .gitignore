@@ -1,0 +1,12 @@
+venv/
+node_modules/
+__pycache__/
+*.pyc
+.env
+dataset/
+ifct2017-main/
+*.pt
+!yolov8n.pt
+.DS_Store
+*.sqlite
+*.db
