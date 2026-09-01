@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, ChevronRight, Activity, Leaf, Droplet, Flame, ArrowRight, Loader2, Image as ImageIcon, Camera } from 'lucide-react';
+import { UploadCloud, Activity, Leaf, Flame, ArrowRight, Image as ImageIcon, Camera } from 'lucide-react';
 import axios from 'axios';
 
 interface BBox {
