@@ -1,0 +1,6 @@
+Flask==3.0.3
+Flask-Cors==4.0.1
+ultralytics==8.4.135
+torch==2.13.0
+torchvision
+gunicorn==22.0.0

@@ -76,7 +76,8 @@ function App() {
       // Mock delay for UI/UX demonstration of processing
       await new Promise(r => setTimeout(r, 2000));
       
-      const response = await axios.post<PredictionResponse>('http://127.0.0.1:5000/predict', formData, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+      const response = await axios.post<PredictionResponse>(`${apiUrl}/predict`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
