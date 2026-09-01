@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Activity, Leaf, Flame, ArrowRight, Image as ImageIcon, Camera } from 'lucide-react';
+import { UploadCloud, Activity, Leaf, Flame, ArrowRight, Image as ImageIcon, Camera, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
 interface BBox {
@@ -309,8 +309,20 @@ function App() {
               {/* Right Column: Nutrition Data */}
               <div className="lg:col-span-7 space-y-8">
                 
-                {/* Total Summary */}
-                <div className="glass-panel p-8 rounded-3xl relative overflow-hidden">
+                {results.foods.length === 0 ? (
+                  <div className="glass-panel p-12 rounded-3xl flex flex-col items-center justify-center text-center space-y-4 h-full min-h-[300px]">
+                    <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-2">
+                      <AlertCircle className="w-10 h-10 text-slate-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold">Meal Not Recognized</h3>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-sm text-lg leading-relaxed">
+                      We couldn't detect any familiar foods in this image. The dish might not be in our dataset, or it may not be a supported Indian food yet!
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Total Summary */}
+                    <div className="glass-panel p-8 rounded-3xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                   
                   <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
@@ -427,6 +439,8 @@ function App() {
                     </motion.div>
                   ))}
                 </div>
+                </>
+                )}
 
               </div>
             </motion.div>
