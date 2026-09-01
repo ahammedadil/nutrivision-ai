@@ -2,8 +2,8 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from services.inference_service import InferenceService
-from services.nutrition_engine import NutritionEngine
+from backend.services.inference_service import InferenceService
+from backend.services.nutrition_engine import NutritionEngine
 
 app = Flask(__name__)
 CORS(app)
