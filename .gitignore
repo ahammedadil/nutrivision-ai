@@ -11,4 +11,3 @@ ifct2017-main/
 !ai/training/nutrivision_indian_production-2/weights/best.pt
 .DS_Store
 *.sqlite
-*.db
