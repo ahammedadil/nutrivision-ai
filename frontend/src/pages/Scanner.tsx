@@ -45,9 +45,14 @@ export default function Scanner() {
       // Mock network delay to show off the fancy loading animation
       await new Promise(r => setTimeout(r, 4000));
       
+      // 1. Detect if the user is running the website on their local laptop
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const defaultApiUrl = isLocalhost ? 'http://127.0.0.1:5000' : 'https://nutrivision-ai-4cmr.onrender.com';
-      const apiUrl = import.meta.env.VITE_API_URL || defaultApiUrl;
+      
+      // 2. FORCE the correct backend URL. If they are on Vercel (phone), ALWAYS use Render!
+      let apiUrl = 'https://nutrivision-ai-4cmr.onrender.com';
+      if (isLocalhost) {
+          apiUrl = 'http://127.0.0.1:5000';
+      }
       
       const response = await axios.post(`${apiUrl}/predict`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
