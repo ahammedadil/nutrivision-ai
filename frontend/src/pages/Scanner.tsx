@@ -45,7 +45,10 @@ export default function Scanner() {
       // Mock network delay to show off the fancy loading animation
       await new Promise(r => setTimeout(r, 4000));
       
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const defaultApiUrl = isLocalhost ? 'http://127.0.0.1:5000' : 'https://nutrivision-ai-4cmr.onrender.com';
+      const apiUrl = import.meta.env.VITE_API_URL || defaultApiUrl;
+      
       const response = await axios.post(`${apiUrl}/predict`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
