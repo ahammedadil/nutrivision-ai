@@ -26,6 +26,11 @@ class RedirectStderr(object):
 
 sys.stderr = RedirectStderr()
 
+
+
+app = Flask(__name__)
+CORS(app)
+
 @app.route('/logs', methods=['GET'])
 def get_logs():
     try:
@@ -33,9 +38,6 @@ def get_logs():
             return f.read()
     except Exception as e:
         return str(e)
-
-app = Flask(__name__)
-CORS(app)
 
 @app.errorhandler(Exception)
 def handle_exception(e):
