@@ -14,10 +14,9 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'upload
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Initialize services at global level so Gunicorn can use Copy-On-Write memory sharing!
-# This prevents Render from running out of its 512MB RAM limit when spawning multiple workers.
-inference_service = InferenceService()
-nutrition_engine = NutritionEngine()
+# Initialize services later to prevent boot timeouts
+inference_service = None
+nutrition_engine = None
 
 @app.route('/', methods=['GET'])
 def index():
@@ -29,6 +28,12 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    global inference_service, nutrition_engine
+    if inference_service is None:
+        inference_service = InferenceService()
+    if nutrition_engine is None:
+        nutrition_engine = NutritionEngine()
+
     if 'image' not in request.files:
         return jsonify({'error': 'No image part'}), 400
         
