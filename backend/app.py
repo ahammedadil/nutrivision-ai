@@ -2,6 +2,8 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.services.inference_service import InferenceService
 from backend.services.nutrition_engine import NutritionEngine
 
