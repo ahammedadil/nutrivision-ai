@@ -65,9 +65,13 @@ export default function Scanner() {
           imagePreview: URL.createObjectURL(file) 
         } 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error analyzing image:", error);
-      alert("Failed to analyze image. Make sure the backend is running.");
+      let errorMsg = "Failed to analyze image. Make sure the backend is running.";
+      if (error.response && error.response.data && error.response.data.error) {
+          errorMsg = "Backend Error: " + error.response.data.error;
+      }
+      alert(errorMsg);
       setIsProcessing(false);
       setImagePreview(null);
     }
