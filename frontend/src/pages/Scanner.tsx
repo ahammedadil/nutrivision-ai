@@ -66,15 +66,26 @@ export default function Scanner() {
         } 
       });
     } catch (error: any) {
-      console.error("Error analyzing image:", error);
-      let errorMsg = "Failed to analyze image. Make sure the backend is running.";
-      if (error.response && error.response.data && error.response.data.error) {
-          errorMsg = "Backend Error: " + error.response.data.error;
+        console.error('Scan error:', error);
+        
+        let errorMsg = 'Failed to analyze image. Make sure the backend is running.';
+        
+        if (error.response) {
+            if (error.response.data && error.response.data.error) {
+                errorMsg = 'Backend JSON Error: ' + error.response.data.error;
+            } else if (typeof error.response.data === 'string') {
+                errorMsg = 'Backend HTTP Error ' + error.response.status + ': (HTML Returned)';
+            } else {
+                errorMsg = 'Backend Error Status: ' + error.response.status;
+            }
+        } else if (error.message) {
+            errorMsg = 'Network/Client Error: ' + error.message;
+        }
+        
+        alert(errorMsg);
+        setIsProcessing(false);
+        setImagePreview(null);
       }
-      alert(errorMsg);
-      setIsProcessing(false);
-      setImagePreview(null);
-    }
   };
 
   return (
