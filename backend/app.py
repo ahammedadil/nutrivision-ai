@@ -14,16 +14,10 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'upload
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Initialize services
-inference_service = None
+# Initialize services at global level so Gunicorn can use Copy-On-Write memory sharing!
+# This prevents Render from running out of its 512MB RAM limit when spawning multiple workers.
+inference_service = InferenceService()
 nutrition_engine = NutritionEngine()
-
-@app.before_request
-def init_services():
-    global inference_service
-    if inference_service is None:
-        # Load YOLO model only once
-        inference_service = InferenceService()
 
 @app.route('/', methods=['GET'])
 def index():
