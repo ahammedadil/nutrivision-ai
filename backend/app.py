@@ -25,6 +25,14 @@ def init_services():
         # Load YOLO model only once
         inference_service = InferenceService()
 
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({
+        'status': 'online',
+        'message': 'NutriVision AI Backend is running perfectly!',
+        'version': '2.0 (Premium Phase)'
+    }), 200
+
 @app.route('/predict', methods=['POST'])
 def predict():
     if 'image' not in request.files:
