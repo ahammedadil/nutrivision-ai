@@ -1,11 +1,13 @@
 import os
-from ultralytics import YOLO
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MODEL_PATH = os.path.join(BASE_DIR, "ai", "training", "nutrivision_indian_production-2", "weights", "best.pt")
 
 class InferenceService:
     def __init__(self):
+        print("Importing PyTorch lazy-load...")
+        from ultralytics import YOLO
+        
         if os.path.exists(MODEL_PATH):
             print(f"Loading custom model from {MODEL_PATH}")
             self.model = YOLO(MODEL_PATH)
