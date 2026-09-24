@@ -11,20 +11,6 @@ from backend.services.nutrition_engine import NutritionEngine
 import sys
 import logging
 
-class RedirectStderr(object):
-    def __init__(self):
-        self.log_file = '/opt/render/project/src/backend/error.log'
-        # ensure file exists
-        open(self.log_file, 'a').close()
-        
-    def write(self, message):
-        with open(self.log_file, 'a') as f:
-            f.write(message)
-            
-    def flush(self):
-        pass
-
-sys.stderr = RedirectStderr()
 
 
 
@@ -34,7 +20,8 @@ CORS(app)
 @app.route('/logs', methods=['GET'])
 def get_logs():
     try:
-        with open('/opt/render/project/src/backend/error.log', 'r') as f:
+        import traceback
+        with open('error.log', 'r') as f:
             return f.read()
     except Exception as e:
         return str(e)
