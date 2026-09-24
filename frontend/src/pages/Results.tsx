@@ -19,8 +19,8 @@ interface DetectedFood {
   error?: string;
 }
 interface PredictionResponse {
-  detected_foods: DetectedFood[];
-  total_nutrition: { calories: number; protein: number; carbs: number; fat: number; };
+  foods: DetectedFood[];
+  total: { calories: number; protein: number; carbs: number; fat: number; };
 }
 
 export default function Results() {
@@ -31,7 +31,6 @@ export default function Results() {
   const state = location.state as { results?: PredictionResponse, imagePreview?: string };
   const [hasLogged, setHasLogged] = useState(false);
 
-  // If someone navigates here directly without scanning, boot them back
   useEffect(() => {
     if (!state?.results) {
       navigate('/scanner', { replace: true });
@@ -42,18 +41,17 @@ export default function Results() {
   const { results, imagePreview } = state;
 
   const handleLogMeal = () => {
-    if (hasLogged || results.detected_foods.length === 0) return;
+    if (hasLogged || results.foods.length === 0) return;
     
-    // Combine names if multiple foods detected
-    const mealName = results.detected_foods.map(f => f.name.charAt(0).toUpperCase() + f.name.slice(1)).join(', ');
+    const mealName = results.foods.map(f => f.name.charAt(0).toUpperCase() + f.name.slice(1)).join(', ');
     
     addMeal({
       id: Date.now().toString(),
       name: mealName,
-      calories: results.total_nutrition.calories,
-      protein: results.total_nutrition.protein,
-      carbs: results.total_nutrition.carbs,
-      fat: results.total_nutrition.fat,
+      calories: results.total.calories,
+      protein: results.total.protein,
+      carbs: results.total.carbs,
+      fat: results.total.fat,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
     
@@ -76,40 +74,14 @@ export default function Results() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
-        {/* Left: Image with Bounding Boxes */}
+        {/* Left: Image */}
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="relative rounded-[2rem] overflow-hidden glass-panel border border-slate-200 dark:border-slate-800/50 shadow-2xl shadow-black/5 h-fit">
           <img src={imagePreview} alt="Scanned Food" className="w-full h-auto object-cover" />
-          
-          {/* Draw Bounding Boxes */}
-          {results.detected_foods.map((food, idx) => {
-            const { x1, y1, x2, y2 } = food.bbox;
-            const top = `${y1}%`;
-            const left = `${x1}%`;
-            const width = `${x2 - x1}%`;
-            const height = `${y2 - y1}%`;
-
-            return (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5 + (idx * 0.1) }}
-                className="absolute border-2 border-emerald-400 bg-emerald-400/20 shadow-[0_0_15px_rgba(52,211,153,0.5)] rounded-lg pointer-events-none"
-                style={{ top, left, width, height }}
-              >
-                <div className="absolute -top-3 -left-0.5 -translate-y-full flex flex-col items-start drop-shadow-md">
-                  <div className="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-t-md rounded-br-md whitespace-nowrap">
-                    {food.name.toUpperCase()} {Math.round(food.confidence * 100)}%
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
         </motion.div>
 
         {/* Right: Nutrition Data */}
         <div className="space-y-6">
-          {results.detected_foods.length === 0 ? (
+          {results.foods.length === 0 ? (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-panel p-10 rounded-[2rem] flex flex-col items-center justify-center text-center space-y-4 h-full min-h-[300px]">
               <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-2 shadow-inner">
                 <AlertCircle className="w-10 h-10 text-slate-400" />
@@ -121,7 +93,7 @@ export default function Results() {
             </motion.div>
           ) : (
             <>
-              {results.detected_foods.map((food, idx) => (
+              {results.foods.map((food, idx) => (
                 <motion.div 
                   key={idx}
                   initial={{ opacity: 0, x: 20 }} 
