@@ -10,6 +10,12 @@ from backend.services.nutrition_engine import NutritionEngine
 app = Flask(__name__)
 CORS(app)
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
