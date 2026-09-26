@@ -44,10 +44,47 @@ class GeminiService:
         
         CURRENT_KEY_INDEX = CURRENT_KEY_INDEX % len(keys)
         return genai.Client(api_key=keys[CURRENT_KEY_INDEX]), keys
+
+    def _fallback_openai(self, image_path, prompt):
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        if not openai_key:
+            raise Exception("Gemini failed and no OPENAI_API_KEY provided for fallback.")
+            
+        print("Initiating OpenAI Fallback...")
+        import openai
+        client = openai.OpenAI(api_key=openai_key)
         
-    def _encode_image(self, image_path):
-        with open(image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
+        # Base64 encode the compressed image
+        compressed_bytes = self._compress_image(image_path)
+        base64_image = base64.b64encode(compressed_bytes).decode('utf-8')
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                response_format={ "type": "json_object" },
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt + "\\n\\nYou must respond with a JSON object containing a 'foods' array."},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=800,
+                temperature=0.1
+            )
+            raw_text = response.choices[0].message.content.strip()
+            parsed_json = json.loads(raw_text)
+            return parsed_json.get("foods", [])
+        except Exception as e:
+            print("OpenAI Fallback failed:", e)
+            raise Exception(f"Both Gemini and OpenAI Fallback failed: {str(e)}")
 
     def analyze_image(self, image_path):
         global CURRENT_KEY_INDEX
@@ -66,10 +103,12 @@ class GeminiService:
         """
         
         import time
+        last_error = None
+        
         # Try up to 5 times to handle key rotation and 503s
         for attempt in range(5):
-            client, keys = self._get_client()
             try:
+                client, keys = self._get_client()
                 response = client.models.generate_content(
                     model='gemini-3.8-flash',
                     contents=[
@@ -90,6 +129,7 @@ class GeminiService:
                 return parsed_json.get("foods", [])
             except Exception as e:
                 error_str = str(e)
+                last_error = e
                 
                 # If we get a 429 Rate Limit (Quota Exhausted), rotate to the next API key!
                 if '429' in error_str and attempt < 4:
@@ -103,5 +143,9 @@ class GeminiService:
                     time.sleep(5)
                     continue
                     
-                print("Failed to parse Gemini response:", e)
-                raise e
+                print(f"Gemini attempt {attempt+1} failed:", e)
+                
+        # If we reach here, Gemini completely failed all 5 retries. Trigger OpenAI Fallback!
+        print("All Gemini retries failed. Triggering OpenAI Fallback...")
+        return self._fallback_openai(image_path, prompt)
+
