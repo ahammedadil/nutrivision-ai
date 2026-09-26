@@ -4,8 +4,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from backend.services.inference_service import InferenceService
-from backend.services.nutrition_engine import NutritionEngine
+from backend.services.gemini_service import GeminiService
 
 
 import sys
@@ -37,8 +36,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Initialize services later to prevent boot timeouts
-inference_service = None
-nutrition_engine = None
+gemini_service = None
 
 @app.route('/', methods=['GET'])
 def index():
@@ -51,11 +49,9 @@ def index():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        global inference_service, nutrition_engine
-        if inference_service is None:
-            inference_service = InferenceService()
-        if nutrition_engine is None:
-            nutrition_engine = NutritionEngine()
+        global gemini_service
+        if gemini_service is None:
+            gemini_service = GeminiService()
     
         if 'image' not in request.files:
             return jsonify({'error': 'No image part'}), 400
@@ -69,48 +65,34 @@ def predict():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             
-            # 1. Run inference
-            detected_items = inference_service.predict(filepath)
+                    # Analyze image with Gemini
+        detected_foods = gemini_service.analyze_image(filepath)
+        
+        foods_result = []
+        total_nutrition = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "fiber": 0, "sugar": 0}
+        
+        for food in detected_foods:
+            food_data = {
+                "name": food.get("name", "Unknown Food"),
+                "confidence": 0.99,
+                "bbox": {"x1": 0, "y1": 0, "x2": 0, "y2": 0},
+                "calories": food.get("calories", 0),
+                "protein": food.get("protein", 0),
+                "carbs": food.get("carbs", 0),
+                "fat": food.get("fat", 0),
+                "fiber": food.get("fiber", 0),
+                "sugar": food.get("sugar", 0),
+                "serving_size": food.get("serving_size", "1 serving")
+            }
+            foods_result.append(food_data)
             
-            # 2. Get nutrition info
-            foods_result = []
-            for item in detected_items:
-                name = item['name']
-                
-                # Simple fuzzy match for "Pizza" / "pizza" (our mock model output capitalized)
-                # YOLO might output lowercase depending on names config
-                nutrition = nutrition_engine.get_nutrition_for_food(name.capitalize())
-                
-                if not nutrition:
-                    # If not found, check if it's lower case match
-                    nutrition = nutrition_engine.get_nutrition_for_food(name)
-                    
-                if nutrition:
-                    food_data = {
-                        "name": nutrition['name'],
-                        "confidence": item['confidence'],
-                        "bbox": item['bbox'],
-                        "calories": nutrition['calories'],
-                        "protein": nutrition['protein'],
-                        "carbs": nutrition['carbs'],
-                        "fat": nutrition['fat'],
-                        "fiber": nutrition['fiber'],
-                        "sugar": nutrition['sugar'],
-                        "serving_size": nutrition['serving_size']
-                    }
-                    foods_result.append(food_data)
-                else:
-                    # Food detected but no nutrition data
-                    foods_result.append({
-                        "name": name,
-                        "confidence": item['confidence'],
-                        "bbox": item['bbox'],
-                        "error": "Nutrition data not found"
-                    })
-                    
-            # 3. Calculate total meal nutrition
-            valid_foods = [f for f in foods_result if "error" not in f]
-            total_nutrition = nutrition_engine.calculate_total_meal(valid_foods)
+            # Add to totals
+            total_nutrition["calories"] += food_data["calories"]
+            total_nutrition["protein"] += food_data["protein"]
+            total_nutrition["carbs"] += food_data["carbs"]
+            total_nutrition["fat"] += food_data["fat"]
+            total_nutrition["fiber"] += food_data["fiber"]
+            total_nutrition["sugar"] += food_data["sugar"]
             
             # Cleanup uploaded file
             os.remove(filepath)

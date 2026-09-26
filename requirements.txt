@@ -1,6 +1,5 @@
 Flask==3.0.3
 Flask-Cors==4.0.1
-ultralytics==8.4.135
-torch==2.13.0
-torchvision
 gunicorn==22.0.0
+google-generativeai==0.8.2
+python-dotenv==1.0.1
