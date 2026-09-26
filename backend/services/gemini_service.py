@@ -3,6 +3,8 @@ from google import genai
 from google.genai import types
 import json
 import base64
+from io import BytesIO
+from PIL import Image
 from pydantic import BaseModel, Field
 
 CURRENT_KEY_INDEX = 0
@@ -21,6 +23,15 @@ class FoodResponse(BaseModel):
     foods: list[Nutrition]
 
 class GeminiService:
+    def _compress_image(self, path):
+        with Image.open(path) as img:
+            img = img.convert('RGB')
+            # Reduce resolution to max 800x800 and compress aggressively
+            img.thumbnail((800, 800))
+            buffer = BytesIO()
+            img.save(buffer, format='JPEG', quality=70)
+            return buffer.getvalue()
+
     def __init__(self):
         pass
         
@@ -64,7 +75,7 @@ class GeminiService:
                     contents=[
                         prompt,
                         types.Part.from_bytes(
-                            data=open(image_path, "rb").read(),
+                            data=self._compress_image(image_path),
                             mime_type='image/jpeg',
                         )
                     ],
