@@ -47,7 +47,7 @@ class GeminiService:
         """
         
         import time
-        for attempt in range(10):
+        for attempt in range(3):
             try:
                 response = self.client.models.generate_content(
                     model='gemini-3.8-flash',
@@ -68,8 +68,8 @@ class GeminiService:
                 parsed_json = json.loads(response.text)
                 return parsed_json.get("foods", [])
             except Exception as e:
-                if '503' in str(e) and attempt < 9:
-                    time.sleep(2)
+                if '503' in str(e) and attempt < 2:
+                    time.sleep(5)
                     continue
                 print("Failed to parse Gemini response:", e)
                 raise e
