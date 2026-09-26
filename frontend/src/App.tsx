@@ -25,7 +25,7 @@ export default function App() {
               N
             </div>
             <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-500">
-              NutriVision <span className="text-slate-400 dark:text-slate-500 font-medium">AI</span>
+              Nova
             </span>
           </Link>
           
