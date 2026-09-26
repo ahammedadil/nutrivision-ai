@@ -16,6 +16,10 @@ import logging
 app = Flask(__name__)
 CORS(app)
 
+@app.route("/")
+def healthcheck():
+    return "Nova Backend is Running!"
+
 @app.route('/logs', methods=['GET'])
 def get_logs():
     try:
