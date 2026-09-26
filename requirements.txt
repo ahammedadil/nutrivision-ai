@@ -5,5 +5,5 @@ google-genai
 python-dotenv==1.0.1
 
 openai
-Pillow==10.3.0
+Pillow
 pydantic
