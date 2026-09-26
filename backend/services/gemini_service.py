@@ -50,7 +50,7 @@ class GeminiService:
         for attempt in range(3):
             try:
                 response = self.client.models.generate_content(
-                    model='gemini-3.8-flash',
+                    model='gemini-3.8-flash-8b',
                     contents=[
                         prompt,
                         types.Part.from_bytes(
