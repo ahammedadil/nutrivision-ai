@@ -45,7 +45,7 @@ export default function Scanner() {
 
     try {
       // Mock network delay to show off the fancy loading animation
-      await new Promise(r => setTimeout(r, 4000));
+      // Fake delay removed for maximum speed
       
       // 1. Detect if the user is running the website on their local laptop
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
