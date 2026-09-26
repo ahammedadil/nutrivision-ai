@@ -5,6 +5,8 @@ import json
 import base64
 from pydantic import BaseModel, Field
 
+CURRENT_KEY_INDEX = 0
+
 class Nutrition(BaseModel):
     name: str
     calories: int
@@ -20,18 +22,24 @@ class FoodResponse(BaseModel):
 
 class GeminiService:
     def __init__(self):
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
+        pass
+        
+    def _get_client(self):
+        global CURRENT_KEY_INDEX
+        keys_str = os.environ.get("GEMINI_API_KEY", "")
+        keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+        if not keys:
             raise ValueError("GEMINI_API_KEY environment variable is not set!")
         
-        self.client = genai.Client(api_key=api_key)
+        CURRENT_KEY_INDEX = CURRENT_KEY_INDEX % len(keys)
+        return genai.Client(api_key=keys[CURRENT_KEY_INDEX]), keys
         
     def _encode_image(self, image_path):
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
     def analyze_image(self, image_path):
-        base64_image = self._encode_image(image_path)
+        global CURRENT_KEY_INDEX
         
         prompt = """
         You are an expert nutritionist and food AI.
@@ -47,9 +55,11 @@ class GeminiService:
         """
         
         import time
-        for attempt in range(3):
+        # Try up to 5 times to handle key rotation and 503s
+        for attempt in range(5):
+            client, keys = self._get_client()
             try:
-                response = self.client.models.generate_content(
+                response = client.models.generate_content(
                     model='gemini-3.8-flash',
                     contents=[
                         prompt,
@@ -68,8 +78,19 @@ class GeminiService:
                 parsed_json = json.loads(response.text)
                 return parsed_json.get("foods", [])
             except Exception as e:
-                if '503' in str(e) and attempt < 2:
+                error_str = str(e)
+                
+                # If we get a 429 Rate Limit (Quota Exhausted), rotate to the next API key!
+                if '429' in error_str and attempt < 4:
+                    print(f"Key {CURRENT_KEY_INDEX + 1} exhausted. Rotating to next key...")
+                    CURRENT_KEY_INDEX = (CURRENT_KEY_INDEX + 1) % len(keys)
+                    time.sleep(1)
+                    continue
+                    
+                # If Google is overloaded, just wait and try again
+                elif '503' in error_str and attempt < 4:
                     time.sleep(5)
                     continue
+                    
                 print("Failed to parse Gemini response:", e)
                 raise e
