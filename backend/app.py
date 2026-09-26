@@ -4,7 +4,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from backend.services.gemini_service import GeminiService
+from backend.services.openai_service import OpenAIService
 
 
 import sys
@@ -36,7 +36,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Initialize services later to prevent boot timeouts
-gemini_service = None
+openai_service = None
 
 @app.route('/', methods=['GET'])
 def index():
@@ -49,9 +49,9 @@ def index():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        global gemini_service
-        if gemini_service is None:
-            gemini_service = GeminiService()
+        global openai_service
+        if openai_service is None:
+            openai_service = OpenAIService()
     
         if 'image' not in request.files:
             return jsonify({'error': 'No image part'}), 400
@@ -65,8 +65,8 @@ def predict():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             
-                    # Analyze image with Gemini
-        detected_foods = gemini_service.analyze_image(filepath)
+                    # Analyze image with OpenAI
+        detected_foods = openai_service.analyze_image(filepath)
         
         foods_result = []
         total_nutrition = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "fiber": 0, "sugar": 0}
