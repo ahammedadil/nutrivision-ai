@@ -1,9 +1,11 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import json
-import typing_extensions as typing
+import base64
+from pydantic import BaseModel, Field
 
-class Nutrition(typing.TypedDict):
+class Nutrition(BaseModel):
     name: str
     calories: int
     protein: int
@@ -13,7 +15,7 @@ class Nutrition(typing.TypedDict):
     sugar: int
     serving_size: str
 
-class FoodResponse(typing.TypedDict):
+class FoodResponse(BaseModel):
     foods: list[Nutrition]
 
 class GeminiService:
@@ -22,39 +24,40 @@ class GeminiService:
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable is not set!")
         
-        genai.configure(api_key=api_key)
-        # Use gemini-1.5-flash for fast vision processing
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.client = genai.Client(api_key=api_key)
         
+    def _encode_image(self, image_path):
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
+
     def analyze_image(self, image_path):
-        # Upload the file to Gemini (or pass it directly)
-        myfile = genai.upload_file(image_path)
+        base64_image = self._encode_image(image_path)
         
         prompt = """
         You are an expert nutritionist and food AI.
         Look at this image and identify all the distinct food items present.
         For each food item, estimate the nutritional values for a standard serving size.
-        Return the result strictly as a JSON object matching the requested schema.
         """
         
-        result = self.model.generate_content(
-            [myfile, prompt],
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=FoodResponse,
-                temperature=0.1,
-            ),
-        )
-        
-        # Clean up the uploaded file to save space on Google's servers
         try:
-            genai.delete_file(myfile.name)
-        except:
-            pass
+            response = self.client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=[
+                    prompt,
+                    types.Part.from_bytes(
+                        data=open(image_path, "rb").read(),
+                        mime_type='image/jpeg',
+                    )
+                ],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=FoodResponse,
+                    temperature=0.1,
+                ),
+            )
             
-        try:
-            parsed_json = json.loads(result.text)
+            parsed_json = json.loads(response.text)
             return parsed_json.get("foods", [])
         except Exception as e:
             print("Failed to parse Gemini response:", e)
-            return []
+            raise e
