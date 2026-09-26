@@ -64,5 +64,4 @@ class OpenAIService:
             parsed_json = json.loads(result_text)
             return parsed_json.get("foods", [])
         except Exception as e:
-            print("Failed to parse OpenAI response:", e)
-            return []
+            raise e

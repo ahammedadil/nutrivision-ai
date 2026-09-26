@@ -93,14 +93,17 @@ def predict():
             total_nutrition["fat"] += food_data["fat"]
             total_nutrition["fiber"] += food_data["fiber"]
             total_nutrition["sugar"] += food_data["sugar"]
-            
-            # Cleanup uploaded file
+        
+        # Cleanup uploaded file
+        if os.path.exists(filepath):
             os.remove(filepath)
-            
-            return jsonify({
-                "foods": foods_result,
-                "total": total_nutrition
+        
+        return jsonify({
+            "foods": foods_result,
+            "total": total_nutrition
         })
+            
+
     except Exception as e:
         import traceback
         return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
