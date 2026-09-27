@@ -1,210 +1,212 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Activity, Plus, Camera, History, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
-  const [showLogModal, setShowLogModal] = useState(false);
-  const [manualMeal, setManualMeal] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '' });
-
   const navigate = useNavigate();
-  const { name, streak, dailyGoal, dailyConsumed, recentMeals, addMeal } = useStore();
+  const { dailyConsumed, dailyGoals, recentMeals } = useStore();
 
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manualMeal.name || !manualMeal.calories) return;
-    
-    addMeal({
-      id: Date.now().toString(),
-      name: manualMeal.name,
-      calories: parseInt(manualMeal.calories) || 0,
-      protein: parseInt(manualMeal.protein) || 0,
-      carbs: parseInt(manualMeal.carbs) || 0,
-      fat: parseInt(manualMeal.fat) || 0,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    });
-    
-    setShowLogModal(false);
-    setManualMeal({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  // Calculate NOVA Score (Simple logic based on goals)
+  const calPercent = Math.min((dailyConsumed.calories / dailyGoals.calories) * 100, 100) || 0;
+  const proPercent = Math.min((dailyConsumed.protein / dailyGoals.protein) * 100, 100) || 0;
+  
+  // Score out of 100 based on hitting protein without going over calories
+  const novaScore = Math.round((proPercent * 0.6) + ((100 - Math.abs(100 - calPercent)) * 0.4)) || 0;
+  let scoreText = "NEEDS DATA";
+  if (novaScore > 85) scoreText = "EXCELLENT";
+  else if (novaScore > 70) scoreText = "GOOD";
+  else if (novaScore > 50) scoreText = "FAIR";
+
+  const getStrokeColor = (val: number, goal: number, isCalories = false) => {
+    if (val === 0) return 'var(--color-nova-elevated)';
+    const pct = val / goal;
+    if (isCalories && pct > 1.1) return 'var(--color-nova-red)'; // Too many calories
+    if (!isCalories && pct >= 0.9) return 'var(--color-nova-green)'; // Hit protein/target
+    if (pct > 0.4) return 'var(--color-nova-blue)';
+    return 'var(--color-nova-yellow)';
   };
 
-  const proteinPercent = Math.min(100, (dailyConsumed.protein / dailyGoal.protein) * 100);
-  const carbsPercent = Math.min(100, (dailyConsumed.carbs / dailyGoal.carbs) * 100);
-  const fatPercent = Math.min(100, (dailyConsumed.fat / dailyGoal.fat) * 100);
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Header section */}
-      <div className="flex justify-between items-end">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            Good Evening, {name} <span className="inline-block animate-wave">👋</span>
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400">Here is your AI nutrition summary for today.</p>
-        </motion.div>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="max-w-2xl mx-auto p-6 pt-12 md:pt-16 font-sans"
+    >
+      {/* Header */}
+      <header className="mb-12">
+        <motion.h1 
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-4xl md:text-[44px] font-medium leading-[1.1] mb-4"
+        >
+          Good evening,<br/>Ahammed.
+        </motion.h1>
+        <p className="text-[var(--color-nova-text-secondary)]">{today}</p>
+      </header>
+
+      {/* NOVA SCORE Dial */}
+      <section className="mb-16 flex flex-col items-center justify-center">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-[var(--color-nova-text-secondary)] mb-6 uppercase">
+          NOVA Score
+        </p>
+        <div className="relative w-48 h-48 flex items-center justify-center mb-6">
+          <svg className="absolute inset-0 w-full h-full -rotate-90">
+            <circle 
+              cx="96" cy="96" r="88" 
+              fill="none" 
+              stroke="var(--color-nova-elevated)" 
+              strokeWidth="4"
+            />
+            <motion.circle 
+              cx="96" cy="96" r="88" 
+              fill="none" 
+              stroke="var(--color-nova-green)" 
+              strokeWidth="4"
+              strokeDasharray="553"
+              initial={{ strokeDashoffset: 553 }}
+              animate={{ strokeDashoffset: 553 - (553 * (novaScore / 100)) }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              strokeLinecap="round"
+            />
+          </svg>
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-center"
+          >
+            <span className="text-6xl font-medium tabular-nums tracking-tighter">{novaScore}</span>
+          </motion.div>
+        </div>
+        <div className="flex items-center gap-4 w-full">
+          <div className="h-[1px] flex-1 bg-[var(--color-nova-border)]"></div>
+          <span className="text-xs font-medium tracking-widest text-[var(--color-nova-green)] uppercase">
+            {scoreText}
+          </span>
+          <div className="h-[1px] flex-1 bg-[var(--color-nova-border)]"></div>
+        </div>
+      </section>
+
+      {/* TODAY'S MACROS */}
+      <section className="mb-16">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-[var(--color-nova-text-secondary)] mb-8 uppercase">
+          Today
+        </p>
         
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-2xl">
-          <Flame className="w-5 h-5 text-orange-500" />
-          <span className="font-bold text-orange-500">{streak} Day Streak!</span>
-        </motion.div>
-      </div>
-
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Calories Card */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-2 glass-panel p-8 rounded-3xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-orange-500/20 transition-all duration-500" />
-          
-          <h2 className="text-xl font-bold mb-8 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-orange-500"/> Today's Macros
-          </h2>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-            <div className="col-span-2 sm:col-span-1">
-              <div className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">Calories</div>
-              <div className="text-4xl font-extrabold text-slate-900 dark:text-white">
-                {dailyConsumed.calories}
-                <span className="text-lg text-slate-500 font-medium ml-1">/ {dailyGoal.calories}</span>
+        <div className="flex flex-col gap-8">
+          {/* Calories */}
+          <div>
+            <div className="flex justify-between items-baseline mb-2">
+              <div className="flex flex-col">
+                <span className="text-4xl font-medium tabular-nums leading-none tracking-tight">
+                  {dailyConsumed.calories.toLocaleString()}
+                </span>
+                <span className="text-xs text-[var(--color-nova-text-secondary)] uppercase tracking-wider mt-1">
+                  Calories
+                </span>
+              </div>
+              <div className="text-right flex flex-col">
+                <span className="text-xl text-[var(--color-nova-text-muted)] tabular-nums leading-none">
+                  {dailyGoals.calories.toLocaleString()}
+                </span>
+                <span className="text-[10px] text-[var(--color-nova-text-muted)] uppercase tracking-wider mt-1">
+                  Goal
+                </span>
               </div>
             </div>
-            
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-slate-600 dark:text-slate-300">Protein</span>
-                <span className="font-bold text-orange-600 dark:text-orange-400">{dailyConsumed.protein}g</span>
-              </div>
-              <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${proteinPercent}%` }} transition={{ duration: 1, ease: "easeOut" }} className="h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full" />
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-slate-600 dark:text-slate-300">Carbs</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">{dailyConsumed.carbs}g</span>
-              </div>
-              <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${carbsPercent}%` }} transition={{ duration: 1, delay: 0.2, ease: "easeOut" }} className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" />
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-slate-600 dark:text-slate-300">Fat</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">{dailyConsumed.fat}g</span>
-              </div>
-              <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${fatPercent}%` }} transition={{ duration: 1, delay: 0.4, ease: "easeOut" }} className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full" />
-              </div>
+            <div className="w-full h-1 bg-[var(--color-nova-elevated)] rounded-full overflow-hidden mt-4">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(calPercent, 100)}%` }}
+                transition={{ duration: 1 }}
+                className="h-full rounded-full"
+                style={{ backgroundColor: getStrokeColor(dailyConsumed.calories, dailyGoals.calories, true) }}
+              />
             </div>
           </div>
-        </motion.div>
 
-        {/* Quick Actions */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-panel p-6 rounded-3xl flex flex-col justify-center gap-4">
-          <button 
-            onClick={() => navigate('/scanner')}
-            className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Camera className="w-5 h-5" />
-            Scan Food
-          </button>
-          <button onClick={() => setShowLogModal(true)} className="w-full flex items-center justify-center gap-3 py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98]">
-            <Plus className="w-5 h-5" />
-            Log Manually
-          </button>
-        </motion.div>
+          <div className="h-[1px] w-full bg-[var(--color-nova-border)] my-2"></div>
 
+          {/* Macros */}
+          {[
+            { label: 'Protein', val: dailyConsumed.protein, goal: dailyGoals.protein },
+            { label: 'Carbs', val: dailyConsumed.carbs, goal: dailyGoals.carbs },
+            { label: 'Fat', val: dailyConsumed.fat, goal: dailyGoals.fat },
+          ].map((macro) => {
+            const pct = Math.min((macro.val / macro.goal) * 100, 100) || 0;
+            return (
+              <div key={macro.label}>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm text-[var(--color-nova-text-secondary)] uppercase tracking-wider">
+                    {macro.label}
+                  </span>
+                  <div className="text-right flex items-baseline gap-2">
+                    <span className="text-2xl font-medium tabular-nums">{macro.val}g</span>
+                    <span className="text-sm text-[var(--color-nova-text-muted)] tabular-nums w-12 text-right">
+                      {macro.goal}g
+                    </span>
+                  </div>
+                </div>
+                <div className="w-full h-1 bg-[var(--color-nova-elevated)] rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 1, delay: 0.2 }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: getStrokeColor(macro.val, macro.goal) }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* TIMELINE */}
+      <section className="mb-12">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-[var(--color-nova-text-secondary)] mb-6 uppercase">
+          My Day
+        </p>
+        
+        {recentMeals.length === 0 ? (
+          <div className="text-center py-8 text-[var(--color-nova-text-muted)] text-sm">
+            No meals logged today.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-0">
+            {recentMeals.map((meal) => (
+              <div key={meal.id} className="flex justify-between items-center py-4 border-b border-[var(--color-nova-border)] group">
+                <div className="flex gap-6 items-center">
+                  <span className="text-[var(--color-nova-text-muted)] tabular-nums text-sm">
+                    {meal.time.split(' ')[0]}
+                  </span>
+                  <span className="text-base font-medium group-hover:text-[var(--color-nova-text)] text-[var(--color-nova-text-secondary)] transition-colors">
+                    {meal.name}
+                  </span>
+                </div>
+                <span className="tabular-nums font-medium text-[var(--color-nova-text)]">
+                  {meal.calories}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* MOBILE SCAN CTA */}
+      <div className="md:hidden flex justify-center pb-8">
+        <button 
+          onClick={() => navigate('/scanner')}
+          className="text-xs font-medium tracking-widest text-[var(--color-nova-text)] hover:text-white transition-colors uppercase flex items-center gap-2"
+        >
+          [ + Scan Meal ]
+        </button>
       </div>
 
-      {/* Timeline */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-6">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <History className="w-5 h-5 text-slate-400" /> Recent Meals
-        </h2>
-        
-        <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-slate-800 before:to-transparent">
-          {recentMeals.map((meal, idx) => (
-            <motion.div key={meal.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + (idx * 0.1) }} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-slate-950 bg-slate-200 dark:bg-slate-800 text-slate-500 group-hover:bg-orange-500 group-hover:text-white group-hover:border-orange-200 dark:group-hover:border-orange-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 transition-colors duration-300">
-                <span className="text-xs font-bold">{meal.time.split(' ')[0]}</span>
-              </div>
-              
-              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass-panel p-5 rounded-2xl group-hover:shadow-lg transition-all duration-300">
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-bold text-lg">{meal.name}</h3>
-                  <span className="font-bold text-orange-500">{meal.calories} kcal</span>
-                </div>
-                <div className="flex gap-3 text-sm text-slate-500 font-medium">
-                  <span>P: {meal.protein}g</span>
-                  <span>C: {meal.carbs}g</span>
-                  <span>F: {meal.fat}g</span>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Manual Log Modal */}
-      <AnimatePresence>
-        {showLogModal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
-          >
-            <motion.div 
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
-              className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl relative"
-            >
-              <button 
-                onClick={() => setShowLogModal(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              
-              <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white">Log Meal Manually</h2>
-              
-              <form onSubmit={handleManualSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-500 mb-1">Food Name *</label>
-                  <input required type="text" value={manualMeal.name} onChange={e => setManualMeal({...manualMeal, name: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="e.g., Chicken Salad" />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-500 mb-1">Calories *</label>
-                    <input required type="number" min="0" value={manualMeal.calories} onChange={e => setManualMeal({...manualMeal, calories: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="kcal" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-500 mb-1">Protein (g)</label>
-                    <input type="number" min="0" value={manualMeal.protein} onChange={e => setManualMeal({...manualMeal, protein: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="g" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-500 mb-1">Carbs (g)</label>
-                    <input type="number" min="0" value={manualMeal.carbs} onChange={e => setManualMeal({...manualMeal, carbs: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="g" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-500 mb-1">Fat (g)</label>
-                    <input type="number" min="0" value={manualMeal.fat} onChange={e => setManualMeal({...manualMeal, fat: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="g" />
-                  </div>
-                </div>
-                
-                <button type="submit" className="w-full mt-6 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white rounded-xl font-bold shadow-lg shadow-orange-500/25 transition-all">
-                  Add Meal
-                </button>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

@@ -2,50 +2,91 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import Results from './pages/Results';
+import Insights from './pages/Insights';
+import Profile from './pages/Profile';
+import MealsList from './pages/MealsList';
 import { AnimatePresence } from 'framer-motion';
+import { Home, List, ScanLine, BarChart2, User } from 'lucide-react';
 
 export default function App() {
   const location = useLocation();
 
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans selection:bg-orange-500/30 overflow-x-hidden">
-      
-      {/* Aurora Background Effect */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-orange-600/20 blur-[120px] mix-blend-screen" />
-        <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-red-600/20 blur-[120px] mix-blend-screen" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] mix-blend-screen" />
-      </div>
+  const navItems = [
+    { path: '/', icon: <Home size={22} />, label: 'Home' },
+    { path: '/meals', icon: <List size={22} />, label: 'Meals' },
+    { path: '/scanner', icon: <ScanLine size={24} />, label: 'Scan', isAction: true },
+    { path: '/insights', icon: <BarChart2 size={22} />, label: 'Insights' },
+    { path: '/profile', icon: <User size={22} />, label: 'You' }
+  ];
 
-      {/* Floating Navbar */}
-      <header className="sticky top-0 z-50 px-4 py-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="glass-panel px-6 py-4 rounded-full flex items-center justify-between shadow-lg shadow-black/5">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-500/20">
-              N
-            </div>
-            <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-500">
-              Nova
-            </span>
-          </Link>
-          
-          <nav className="hidden sm:flex items-center gap-6">
-            <Link to="/" className={`font-semibold transition-colors ${location.pathname === '/' ? 'text-orange-500' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Dashboard</Link>
-            <Link to="/scanner" className={`font-semibold transition-colors ${location.pathname === '/scanner' ? 'text-orange-500' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>Scan Meal</Link>
-          </nav>
-        </div>
-      </header>
+  return (
+    <div className="min-h-screen bg-[var(--color-nova-bg)] text-[var(--color-nova-text)] font-sans selection:bg-[var(--color-nova-green)]/30 overflow-x-hidden flex flex-col md:flex-row">
+      
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 border-r border-[var(--color-nova-border)] bg-[var(--color-nova-surface)] px-6 py-8 z-50">
+        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity mb-16">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ea580c] to-[#dc2626] flex items-center justify-center text-white font-bold text-xl shadow-lg">
+            N
+          </div>
+          <span className="font-bold text-xl tracking-tight text-white">
+            NOVA
+          </span>
+        </Link>
+        
+        <nav className="flex flex-col gap-6">
+          {navItems.map((item) => (
+            <Link 
+              key={item.path} 
+              to={item.path} 
+              className={`flex items-center gap-4 font-medium transition-colors ${
+                location.pathname === item.path 
+                  ? 'text-white' 
+                  : 'text-[var(--color-nova-text-secondary)] hover:text-white'
+              }`}
+            >
+              {item.icon}
+              <span className="text-lg">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+      </aside>
 
       {/* Page Content */}
-      <main className="relative z-10">
+      <main className="flex-1 relative z-10 pb-24 md:pb-0 min-h-screen">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/meals" element={<MealsList />} />
             <Route path="/scanner" element={<Scanner />} />
             <Route path="/results" element={<Results />} />
+            <Route path="/insights" element={<Insights />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </AnimatePresence>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-[var(--color-nova-elevated)] border-t border-[var(--color-nova-border)] flex items-center justify-around px-2 z-50">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link 
+              key={item.path} 
+              to={item.path} 
+              className={`flex flex-col items-center justify-center w-16 h-16 transition-colors ${
+                item.isAction 
+                  ? 'text-white bg-gradient-to-br from-[#ea580c] to-[#dc2626] rounded-full -translate-y-4 shadow-lg shadow-black/50'
+                  : isActive 
+                    ? 'text-[var(--color-nova-green)]' 
+                    : 'text-[var(--color-nova-text-muted)] hover:text-white'
+              }`}
+            >
+              {item.icon}
+              {!item.isAction && <span className="text-[10px] mt-1 font-medium">{item.label}</span>}
+            </Link>
+          );
+        })}
+      </nav>
 
     </div>
   );
