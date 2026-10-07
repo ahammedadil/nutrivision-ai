@@ -75,7 +75,7 @@ export default function App() {
               to={item.path} 
               className={`flex flex-col items-center justify-center w-16 h-16 transition-colors ${
                 item.isAction 
-                  ? 'text-white bg-gradient-to-br from-[#ea580c] to-[#dc2626] rounded-full -translate-y-4 shadow-lg shadow-black/50'
+                  ? 'text-[var(--color-nova-bg)] bg-[var(--color-nova-text)] rounded-full -translate-y-4 shadow-lg shadow-black/50'
                   : isActive 
                     ? 'text-[var(--color-nova-green)]' 
                     : 'text-[var(--color-nova-text-muted)] hover:text-white'

@@ -27,6 +27,8 @@ interface UserState {
     fat: number;
   };
   recentMeals: Meal[];
+  lastScannedFoods: any[];
+  setLastScannedFoods: (foods: any[]) => void;
   addMeal: (meal: Meal) => void;
   resetDaily: () => void;
 }
@@ -52,6 +54,8 @@ export const useStore = create<UserState>()(
         { id: '1', name: 'Idli with Sambar', calories: 320, protein: 12, carbs: 54, fat: 4, time: '8:30 AM' },
         { id: '2', name: 'Chicken Biryani', calories: 650, protein: 45, carbs: 70, fat: 22, time: '1:15 PM' },
       ],
+      lastScannedFoods: [],
+      setLastScannedFoods: (foods) => set({ lastScannedFoods: foods }),
       addMeal: (meal) => set((state) => ({
         recentMeals: [meal, ...state.recentMeals],
         dailyConsumed: {
@@ -67,7 +71,7 @@ export const useStore = create<UserState>()(
       })
     }),
     {
-      name: 'nutrivision-storage', // key in localStorage
+      name: 'nutrivision-storage',
     }
   )
 );

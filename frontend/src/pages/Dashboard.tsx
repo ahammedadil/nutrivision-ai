@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { dailyConsumed, dailyGoals, recentMeals } = useStore();
+  const { dailyConsumed, dailyGoal, recentMeals } = useStore();
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   // Calculate NOVA Score (Simple logic based on goals)
-  const calPercent = Math.min((dailyConsumed.calories / dailyGoals.calories) * 100, 100) || 0;
-  const proPercent = Math.min((dailyConsumed.protein / dailyGoals.protein) * 100, 100) || 0;
+  const calPercent = Math.min((dailyConsumed.calories / dailyGoal.calories) * 100, 100) || 0;
+  const proPercent = Math.min((dailyConsumed.protein / dailyGoal.protein) * 100, 100) || 0;
   
   // Score out of 100 based on hitting protein without going over calories
   const novaScore = Math.round((proPercent * 0.6) + ((100 - Math.abs(100 - calPercent)) * 0.4)) || 0;
@@ -111,7 +111,7 @@ export default function Dashboard() {
               </div>
               <div className="text-right flex flex-col">
                 <span className="text-xl text-[var(--color-nova-text-muted)] tabular-nums leading-none">
-                  {dailyGoals.calories.toLocaleString()}
+                  {dailyGoal.calories.toLocaleString()}
                 </span>
                 <span className="text-[10px] text-[var(--color-nova-text-muted)] uppercase tracking-wider mt-1">
                   Goal
@@ -124,7 +124,7 @@ export default function Dashboard() {
                 animate={{ width: `${Math.min(calPercent, 100)}%` }}
                 transition={{ duration: 1 }}
                 className="h-full rounded-full"
-                style={{ backgroundColor: getStrokeColor(dailyConsumed.calories, dailyGoals.calories, true) }}
+                style={{ backgroundColor: getStrokeColor(dailyConsumed.calories, dailyGoal.calories, true) }}
               />
             </div>
           </div>
@@ -133,9 +133,9 @@ export default function Dashboard() {
 
           {/* Macros */}
           {[
-            { label: 'Protein', val: dailyConsumed.protein, goal: dailyGoals.protein },
-            { label: 'Carbs', val: dailyConsumed.carbs, goal: dailyGoals.carbs },
-            { label: 'Fat', val: dailyConsumed.fat, goal: dailyGoals.fat },
+            { label: 'Protein', val: dailyConsumed.protein, goal: dailyGoal.protein },
+            { label: 'Carbs', val: dailyConsumed.carbs, goal: dailyGoal.carbs },
+            { label: 'Fat', val: dailyConsumed.fat, goal: dailyGoal.fat },
           ].map((macro) => {
             const pct = Math.min((macro.val / macro.goal) * 100, 100) || 0;
             return (

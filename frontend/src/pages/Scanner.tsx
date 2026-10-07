@@ -84,7 +84,7 @@ export default function Scanner() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
                 <button 
                   onClick={() => cameraInputRef.current?.click()}
-                  className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white rounded-full font-medium transition-all"
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-[var(--color-nova-text)] text-[var(--color-nova-bg)] hover:scale-105 rounded-full font-medium transition-all"
                 >
                   <Camera className="w-5 h-5" />
                   Scan your meal
