@@ -25,10 +25,12 @@ export default function App() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 border-r border-[var(--color-nova-border)] bg-[var(--color-nova-surface)] px-6 py-8 z-50">
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity mb-16">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ea580c] to-[#dc2626] flex items-center justify-center text-white font-bold text-xl shadow-lg">
-            N
+          <div className="flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 28V4H12.5L20.5 17.5V4H26V28H19.5L11.5 14.5V28H6Z" fill="white"/>
+            </svg>
           </div>
-          <span className="font-bold text-xl tracking-tight text-white">
+          <span className="font-bold text-xl tracking-[0.15em] text-white">
             NOVA
           </span>
         </Link>
