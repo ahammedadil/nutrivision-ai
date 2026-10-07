@@ -48,7 +48,7 @@ export default function Scanner() {
     try {
       const response = await axios.post(`${BACKEND_URL}/predict`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 45000,
+        timeout: 120000,
       });
 
       setLastScannedFoods(response.data.foods);
