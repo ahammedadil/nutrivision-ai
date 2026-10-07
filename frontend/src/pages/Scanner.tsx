@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import axios from 'axios';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://nova-production.up.railway.app';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://nutrivision-ai-4cmr.onrender.com';
 
 export default function Scanner() {
   const navigate = useNavigate();
